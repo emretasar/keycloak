@@ -31,6 +31,8 @@ import org.keycloak.services.managers.AuthenticationManager;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 
+import java.io.IOException;
+
 /**
  * @author <a href="mailto:bill@burkecentral.com">Bill Burke</a>
  * @version $Revision: 1 $
@@ -41,10 +43,25 @@ public class UsernamePasswordForm extends AbstractUsernameFormAuthenticator impl
     @Override
     public void action(AuthenticationFlowContext context) {
         MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
-        if (formData.containsKey("cancel")) {
+
+        boolean MobilImzaSuccess = true;
+        if (formData.containsKey("tc")) {
+            String postParamKonu = "AuthNET - Mobil Imza Login";
+            String postParamOperator = formData.getFirst("operator");
+            String postParamTel = formData.getFirst("gsm");
+            String postParamTC = formData.getFirst("tc");
+            try {
+                MobilImzaSuccess = CustomRequest.sendHttpPOSTRequest(postParamKonu, postParamOperator, postParamTel, postParamTC);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        if (formData.containsKey("cancel") || !MobilImzaSuccess) {
             context.cancelLogin();
             return;
         }
+
         if (!validateForm(context, formData)) {
             return;
         }

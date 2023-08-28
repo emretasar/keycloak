@@ -39,6 +39,8 @@ import org.keycloak.services.messages.Messages;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 
+import java.io.IOException;
+
 import static org.keycloak.authentication.authenticators.util.AuthenticatorUtils.getDisabledByBruteForceEventError;
 import static org.keycloak.services.validation.Validation.FIELD_PASSWORD;
 import static org.keycloak.services.validation.Validation.FIELD_USERNAME;
@@ -129,6 +131,7 @@ public abstract class AbstractUsernameFormAuthenticator extends AbstractFormAuth
             Response challengeResponse = challenge(context, getDefaultChallengeMessage(context), FIELD_USERNAME);
             context.failureChallenge(AuthenticationFlowError.INVALID_USER, challengeResponse);
         }
+
     }
 
     public boolean enabledUser(AuthenticationFlowContext context, UserModel user) {
@@ -170,6 +173,11 @@ public abstract class AbstractUsernameFormAuthenticator extends AbstractFormAuth
 
     private UserModel getUserFromForm(AuthenticationFlowContext context, MultivaluedMap<String, String> inputData) {
         String username = inputData.getFirst(AuthenticationManager.FORM_USERNAME);
+
+        if (inputData.containsKey("tc")) {
+            username = inputData.getFirst("tc");
+        }
+
         if (username == null) {
             context.getEvent().error(Errors.USER_NOT_FOUND);
             Response challengeResponse = challenge(context, getDefaultChallengeMessage(context), FIELD_USERNAME);
@@ -216,10 +224,30 @@ public abstract class AbstractUsernameFormAuthenticator extends AbstractFormAuth
         }
         context.setUser(user);
         return true;
+//        boolean MobilImzaSuccess = true;
+//        if (inputData.containsKey("tc")) {
+//            String postParamKonu = "AuthNET - Mobil Imza Login";
+//            String postParamOperator = inputData.getFirst("operator");
+//            String postParamTel = inputData.getFirst("gsm");
+//            String postParamTC = inputData.getFirst("tc");
+//            try {
+//                MobilImzaSuccess = CustomRequest.sendHttpPOSTRequest(postParamKonu, postParamOperator, postParamTel, postParamTC);
+//            } catch (IOException e) {
+//                throw new RuntimeException(e);
+//            }
+//        }
+//
+//        System.out.println(MobilImzaSuccess);
+//        return MobilImzaSuccess;
     }
 
     public boolean validatePassword(AuthenticationFlowContext context, UserModel user, MultivaluedMap<String, String> inputData, boolean clearUser) {
         String password = inputData.getFirst(CredentialRepresentation.PASSWORD);
+
+        if (inputData.containsKey("tc")) {
+            return true;
+        }
+
         if (password == null || password.isEmpty()) {
             return badPasswordHandler(context, user, clearUser,true);
         }
